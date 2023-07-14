@@ -18,7 +18,7 @@ public:
 	//平面系数
 	Eigen::VectorXf cofficient_set;
 	//点云集
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane;
 	//法向量
 
 	//构造函数
@@ -28,7 +28,7 @@ public:
 		cofficient_set[2] = 0;
 		cofficient_set[3] = 0;
 	};
-	plane(Eigen::VectorXf cofficientset, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane_) {
+	plane(Eigen::VectorXf cofficientset, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane_) {
 		cofficient_set = cofficientset;
 		cloud_plane = cloud_plane_;
 	}
@@ -39,7 +39,7 @@ class plane_set
 public:
 	
 	//提取平面函数 最终得到一个平面集
-	void Extrace_plane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+	void Extrace_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud);
 	int getPlaneNumber() {
 		return plane_number;
 	};

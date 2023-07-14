@@ -1,13 +1,13 @@
 #include "plane_set.h"
 
 
-#define MAX_ITERATION_    100
+#define MAX_ITERATION_    1
 
 
 void
-copyOutPointCloud(const pcl::visualization::CloudViewer::MonochromeCloud& cloud_in,
+copyOutPointCloud(const pcl::visualization::CloudViewer::ColorCloud& cloud_in,
 	const pcl::Indices& indices,
-	pcl::visualization::CloudViewer::MonochromeCloud& cloud_out)
+	pcl::visualization::CloudViewer::ColorCloud& cloud_out)
 {
 	// Do we want to copy everything?
 	if (indices.size() == cloud_in.points.size())
@@ -42,39 +42,40 @@ copyOutPointCloud(const pcl::visualization::CloudViewer::MonochromeCloud& cloud_
 
 
 void
-plane_set::Extrace_plane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+plane_set::Extrace_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
 {
 	vector<int> inliers;				//存储内点索引的容器
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane_in(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane_out(new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane_in(new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane_out(new pcl::PointCloud<pcl::PointXYZRGB>);
 	cloud_plane_out = cloud;
-	/*Eigen::VectorXf coefficient_Judge;
+
+	Eigen::VectorXf coefficient_Judge(4);//用来判断平面系数是否重复
 	coefficient_Judge[0] = 0;
 	coefficient_Judge[1] = 0;
 	coefficient_Judge[2] = 0;
-	coefficient_Judge[3] = 0;*/
+	coefficient_Judge[3] = 0;
 
 	for (int i = 0; i < MAX_ITERATION_; i++) {
 		//--------------------------RANSAC拟合平面--------------------------
-		pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr model_plane(new pcl::SampleConsensusModelPlane<pcl::PointXYZ>(cloud_plane_out));
-		pcl::RandomSampleConsensus<pcl::PointXYZ> ransac(model_plane);
+		pcl::SampleConsensusModelPlane<pcl::PointXYZRGB>::Ptr model_plane(new pcl::SampleConsensusModelPlane<pcl::PointXYZRGB>(cloud_plane_out));
+		pcl::RandomSampleConsensus<pcl::PointXYZRGB> ransac(model_plane);
 		ransac.setDistanceThreshold(0.01);	//设置距离阈值，与平面距离小于0.01的点作为内点
 		ransac.computeModel();				//执行模型估计
 
 		//-------------------------根据索引提取内点--------------------------
 		
 		ransac.getInliers(inliers);			//提取内点索引
-		pcl::copyPointCloud<pcl::PointXYZ>(*cloud, inliers, *cloud_plane_in);
+		pcl::copyPointCloud<pcl::PointXYZRGB>(*cloud, inliers, *cloud_plane_in);
 
 		//----------------------------输出模型参数---------------------------
 		Eigen::VectorXf coefficient;
 		ransac.getModelCoefficients(coefficient);
-		/*if (coefficient_Judge == coefficient) {
+		if (coefficient_Judge == coefficient) {
 			break;
 		}
-		coefficient_Judge = coefficient;*/
+		coefficient_Judge = coefficient;
 
-		plane plane_(coefficient,cloud_plane_in);//构建平面
+		plane plane_(coefficient, cloud_plane_in);//构建平面
 		planeset.push_back(plane_);//加入平面集
 		plane_number++;//平面数加一
 
