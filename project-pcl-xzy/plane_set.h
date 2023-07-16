@@ -18,7 +18,7 @@ public:
 	//平面系数
 	Eigen::VectorXf cofficient_set;
 	//点云集
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane;
+	pcl::PointCloud<pcl::PointXYZRGB> cloud_plane;
 	//法向量
 
 	//构造函数
@@ -30,7 +30,7 @@ public:
 	};
 	plane(Eigen::VectorXf cofficientset, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane_) {
 		cofficient_set = cofficientset;
-		cloud_plane = cloud_plane_;
+		cloud_plane = *cloud_plane_;
 	}
 };
 

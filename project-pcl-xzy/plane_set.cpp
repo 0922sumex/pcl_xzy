@@ -1,7 +1,7 @@
 #include "plane_set.h"
 
 
-#define MAX_ITERATION_    1
+#define MAX_ITERATION_    20
 
 
 void
@@ -74,16 +74,15 @@ plane_set::Extrace_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
 			break;
 		}
 		coefficient_Judge = coefficient;
-
 		plane plane_(coefficient, cloud_plane_in);//构建平面
 		planeset.push_back(plane_);//加入平面集
 		plane_number++;//平面数加一
-
+		//cout << "内点个数" << cloud_plane_in->size() << endl;
 		cout << "平面方程为：\n" << coefficient[0] << "x + " << coefficient[1] << "y + " << coefficient[2] << "z + "
 			<< coefficient[3] << " = 0" << endl;
 
 		//-------------------------提取外点点云，下一时刻继续提取平面--------------------------
-		
+		//cout << "平面点个数" <<plane_.cloud_plane.size() << endl;
 		copyOutPointCloud(*cloud, inliers, *cloud_plane_out);
 		
 	}
