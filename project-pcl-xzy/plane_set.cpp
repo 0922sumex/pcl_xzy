@@ -1,7 +1,7 @@
 #include "plane_set.h"
 
 
-#define MAX_ITERATION_    20
+#define MAX_ITERATION_    100
 
 
 void
@@ -59,7 +59,7 @@ plane_set::Extrace_plane(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
 		//--------------------------RANSAC拟合平面--------------------------
 		pcl::SampleConsensusModelPlane<pcl::PointXYZRGB>::Ptr model_plane(new pcl::SampleConsensusModelPlane<pcl::PointXYZRGB>(cloud_plane_out));
 		pcl::RandomSampleConsensus<pcl::PointXYZRGB> ransac(model_plane);
-		ransac.setDistanceThreshold(0.01);	//设置距离阈值，与平面距离小于0.01的点作为内点
+		ransac.setDistanceThreshold(0.07);	//设置距离阈值，与平面距离小于0.01的点作为内点
 		ransac.computeModel();				//执行模型估计
 
 		//-------------------------根据索引提取内点--------------------------
