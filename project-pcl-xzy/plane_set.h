@@ -6,31 +6,35 @@
 #include <iostream>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
-#include <pcl/sample_consensus/ransac.h>
-#include <pcl/sample_consensus/sac_model_plane.h> // 拟合平面
 #include <boost/thread/thread.hpp>
 #include <pcl/visualization/cloud_viewer.h>
+#include <pcl/segmentation/sac_segmentation.h>   //RANSAC分割
+#include <pcl/ModelCoefficients.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/sac_model_plane.h> // 拟合平面
+#include <pcl/sample_consensus/method_types.h>   //随机参数估计方法
+#include <pcl/sample_consensus/model_types.h>    //模型定义
 
 using namespace std;
 
 class plane {
 public:
 	//平面系数
-	Eigen::VectorXf cofficient_set;
+	//Eigen::VectorXf cofficient_set;
+	pcl::ModelCoefficients cofficient_set;//模型系数
 	//点云集
 	pcl::PointCloud<pcl::PointXYZRGB> cloud_plane;
 	//法向量
 
 	//构造函数
 	plane() {
-		cofficient_set[0] = 0;
-		cofficient_set[1] = 0;
-		cofficient_set[2] = 0;
-		cofficient_set[3] = 0;
+		
 	};
-	plane(Eigen::VectorXf cofficientset, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_plane_) {
+	plane(pcl::ModelCoefficients cofficientset, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane_) {
 		cofficient_set = cofficientset;
-		cloud_plane = *cloud_plane_;
+		//cloud_plane = *cloud_plane_;
+		pcl::copyPointCloud(*cloud_plane_, cloud_plane);
 	}
 };
 
