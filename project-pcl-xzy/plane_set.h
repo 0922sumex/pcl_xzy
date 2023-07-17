@@ -18,15 +18,19 @@
 
 using namespace std;
 
+typedef struct normal {
+	float normal_x;
+	float normal_y;
+	float normal_z;
+}Normal;
+
 class plane {
 public:
 	//平面系数
-	//Eigen::VectorXf cofficient_set;
 	pcl::ModelCoefficients cofficient_set;//模型系数
-	//点云集
-	pcl::PointCloud<pcl::PointXYZRGB> cloud_plane;
-	//法向量
-
+	pcl::PointCloud<pcl::PointXYZRGB> cloud_plane;//点云集
+	Normal normal;
+	
 	//构造函数
 	plane() {
 		
@@ -35,6 +39,9 @@ public:
 		cofficient_set = cofficientset;
 		//cloud_plane = *cloud_plane_;
 		pcl::copyPointCloud(*cloud_plane_, cloud_plane);
+		normal.normal_x = cofficient_set.values[0];
+		normal.normal_y = cofficient_set.values[1];
+		normal.normal_z = cofficient_set.values[2];
 	}
 };
 
