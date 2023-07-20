@@ -1,93 +1,129 @@
 #include "plfh_solver.h"
 
-void Calcu_angle(plane Plane_itself,plane_set PlaneSet) {
-    //计算该平面到其他平面之间的角度
 
-}
-
-void Calcu_distance(plane Plane_itself,plane_set PlaneSet) {
-    //计算该平面到其他平面之间的距离
-
-}
-
-void Calcu_PLFH(plane_set& PlaneSet)
+void calcLine(pcl::ModelCoefficients coefsOfPlane1, pcl::ModelCoefficients coefsOfPlane2, LinePara3D& coefsOfLine)
 {
-    pcl::PointCloud<pcl::PLFH_scattered>::Ptr features(new pcl::PointCloud<pcl::PLFH_scattered>);
-
-    //计算角度和距离
-    for (int i = 0; i < PlaneSet.getPlaneNumber(); i++) {
-
-        Calcu_angle(PlaneSet.getPlaneSet()[i], PlaneSet);
-        Calcu_distance(PlaneSet.getPlaneSet()[i], PlaneSet);
-
-    }
-    // 计算法线
-    /*pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
-    ne.setInputCloud(cloud);
-
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
-    ne.setSearchMethod(tree);
-
-    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
-    ne.setKSearch(20); // 设置K近邻搜索参数
-    ne.compute(*cloud_normals);*/
-
-    // 计算特征描述符
-    pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
-    fpfh.setInputCloud(cloud);
-    fpfh.setInputNormals(cloud_normals);
-
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr fpfh_tree(new pcl::search::KdTree<pcl::PointXYZ>());
-    fpfh.setSearchMethod(fpfh_tree);
-
-    pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs(new pcl::PointCloud<pcl::FPFHSignature33>);
-    fpfh.setRadiusSearch(0.1); // 设置半径搜索参数
-    fpfh.compute(*fpfhs);
-
-    // 连接直方图
-    pcl::PointCloud<pcl::PointXYZ>::Ptr combined_features(new pcl::PointCloud<pcl::PointXYZ>);
-    combined_features->width = cloud->size();
-    combined_features->height = 1;
-    combined_features->points.resize(cloud->size());
-
-    for (size_t i = 0; i < cloud->size(); ++i)
-    {
-        combined_features->points[i].x = fpfhs->points[i].histogram[0]; // 第一个直方图的第一个bin值
-        combined_features->points[i].y = fpfhs->points[i].histogram[1]; // 第一个直方图的第二个bin值
-        combined_features->points[i].z = fpfhs->points[i].histogram[2]; // 第一个直方图的第三个bin值
-
-        // 这里假设第二个直方图的值是通过其他方式计算得到的
-        // 请根据您的需求替换下面的代码
-        // combined_features->points[i].z = ...;
-    }
-
-    // 保存特征描述符点云
-    pcl::io::savePCDFileASCII("output_features.pcd", *combined_features);
-
-    std::cout << "特征描述符计算完成并保存到output_features.pcd文件中。" << std::endl;
-
-    return 0;
+    //算出两平面间的交线
+    //方向向量n=n1×n2=(b1*c2-c1*b2,c1*a2-a1*c2,a1*b2-b1*a2)
+    pcl::ModelCoefficients temcoefs;
+    double a1, b1, c1, d1, a2, b2, c2, d2;
+    double tempy, tempz;
+    a1 = coefsOfPlane1.values[0];
+    b1 = coefsOfPlane1.values[1];
+    c1 = coefsOfPlane1.values[2];
+    d1 = coefsOfPlane1.values[3];
+    a2 = coefsOfPlane2.values[0];
+    b2 = coefsOfPlane2.values[1];
+    c2 = coefsOfPlane2.values[2];
+    d2 = coefsOfPlane2.values[3];
+    tempz = -(d1 / b1 - d2 / b2) / (c1 / b1 - c2 / b2);
+    tempy = (-c1 / b1) * tempz - d1 / b1;
+    //直线上一点
+    point_line point_temp;
+    point_temp.x = 0.0;
+    point_temp.y = tempy;
+    point_temp.z = tempz;
+    coefsOfLine.point_several.push_back(point_temp);//交线的一个点（0,y,z）
+    //交线的方向向量
+    coefsOfLine.line_direction.dierctionlX=b1 * c2 - c1 * b2;
+    coefsOfLine.line_direction.dierctionlY=c1 * a2 - a1 * c2;
+    coefsOfLine.line_direction.dierctionlZ=a1 * b2 - b1 * a2;
 }
 
-// 创建PFH估计类，并将输入数据集和法线传递给类
-pcl::PFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::PFHSignature125> pfh;
-pfh.setInputCloud(cloud);
-pfh.setInputNormals(normals);
-// 或者, 如果点云类型是 PointNormal, 使用pfh.setInputNormals (cloud);
 
-// 创建一个空的kdtree表示，并将其传递给PFH对象。
-// 树的内容将根据给定的输入数据集填充到对象内部(因为没有给出其他搜索面)。
-pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
-//PCL1.5以下版本使用这个指令
-//pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZ> ()); 
-pfh.setSearchMethod(tree);
-// 输出PFH描述子
-pcl::PointCloud<pcl::PFHSignature125>::Ptr pfhs(new pcl::PointCloud<pcl::PFHSignature125>());
+double Point2Line3DVecproduct(LinePara3D line, pcl::PointXYZ point)
+{
+    //计算固定点到交线的距离
+    //直线的法向量(p,q,r)
+    double p = line.line_normal.normalX;
+    double q = line.line_normal.normalY;
+    double r = line.line_normal.normalZ;
 
-// 使用半径为5cm的球面上的所有邻点
-// 重要:这里使用的半径必须大于用来估计表面法线的半径！！！例如表面法向估计半径为0.02，此处为0.05
-pfh.setRadiusSearch(0.05);
+    //直线上的2个点q和b
+    double x_q = line.point_several[0].x;
+    double y_q = line.point_several[0].y;
+    double z_q = line.point_several[0].z;
 
-// 计算PFH描述子
-pfh.compute(*pfhs);
+    double x_b = 1; //令第2个点的x=1
+    double y_b = y_q - x_q * q / p + q / p;
+    double z_b = z_q - x_q * r / p + r / p;
+
+    double x_o = point.x;
+    double y_o = point.y;
+    double z_o = point.z;
+
+    //两个向量
+    //oq
+    double normal01_x = x_q - x_o;
+    double normal01_y = y_q - y_o;
+    double normal01_z = z_q - z_o;
+
+    //ob
+    double normal02_x = x_b - x_o;
+    double normal02_y = y_b - y_o;
+    double normal02_z = z_b - z_o;
+
+    //oq与ob进行叉乘
+    double chacheng_x = normal01_y * normal02_z - normal02_y * normal01_z;
+    double chacheng_y = normal02_z * normal01_x - normal02_x * normal01_z;
+    double chacheng_z = normal01_x * normal02_y - normal01_y * normal02_x;
+
+    double chacheng_length = sqrt(chacheng_x * chacheng_x + chacheng_y * chacheng_y + chacheng_z * chacheng_z);
+    double dx = x_q - x_b;
+    double dy = y_q - y_b;
+    double dz = z_q - z_b;
+
+    double qb_length = sqrt(dx * dx + dy * dy + dz * dz);
+
+    double ds = chacheng_length / qb_length;
+    return ds;
+
+}
+
+pcl::PLFH_scattered Calcu_plfh (plane Plane_itself,int index,plane_set PlaneSet, pcl::PointXYZ point) {
+    //计算该平面到其他平面之间的角度和距离
+    pcl::PLFH_scattered plfh;
+    Eigen::Vector3f n1 = Plane_itself.normal;
+    LinePara3D coefsOfLine;//相交线 
+
+    for (int i = 0; i < PlaneSet.getPlaneNumber(); i++) {
+        if (i == index) {
+            continue;//本身不参与运算
+        }
+        Eigen::Vector3f n2 = PlaneSet.getPlaneSet()[i].normal;
+        // 归一化向量
+        n1.normalize();
+        n2.normalize();
+        float dotProduct = n1.dot(n2);
+        float n1Norm = n1.norm();
+        float n2Norm = n2.norm();
+
+        // 使用反余弦函数计算夹角
+        float angle = std::acos(dotProduct / (n1Norm * n2Norm));
+        plfh.angle_histogram.push_back(angle);
+        
+        // 计算一个固定点到平面相交线之间的距离
+        //找到平面相交线
+        LinePara3D coefsOfLine;
+        calcLine(Plane_itself.cofficient_set,PlaneSet.getPlaneSet()[i].cofficient_set,coefsOfLine);
+        double dis_line=Point2Line3DVecproduct(coefsOfLine,point);
+        plfh.distance_histogram.push_back(dis_line);
+        //算出距离
+    }
+    return plfh;
+}
+
+
+void Calcu_PLFHset(plane_set& PlaneSet, vector<vector<std::float_t>>& plfh_connected_set, pcl::PointXYZ point)
+{
+    pcl::PLFH_scattered plfh;
+    pcl::DefaultPointRepresentation<pcl::PLFH_scattered> plfh_connected;
+    vector<float> plfh_out;
+
+    for (int i = 0; i < PlaneSet.getPlaneNumber(); i++) {
+        plfh=Calcu_plfh(PlaneSet.getPlaneSet()[i], i,PlaneSet,point);//计算角度和距离
+        plfh_connected.copyToFloatArray(plfh, plfh_out.data()); // 连接直方图
+        plfh_connected_set.push_back(plfh_out);
+    }
+   
 }
