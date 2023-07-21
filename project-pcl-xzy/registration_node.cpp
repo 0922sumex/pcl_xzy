@@ -1,6 +1,8 @@
 #include "Viewer_Results.h"
 #include "PrePorcess.h"
 #include "plfh_solver.h"
+#include <pcl/visualization/pcl_plotter.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
 int
 main(int argc, char** argv)
@@ -28,15 +30,16 @@ main(int argc, char** argv)
 	plane_set PlaneSet_S;//源点云平面集
 	plane_set PlaneSet_T;//目标点云平面集
 	PlaneSet_S.Extrace_plane(cloud);
+    Viewer_Results_clouds(cloud_copy.makeShared(), PlaneSet_S);//可视化点云
 
-    //计算PLFH
-    vector<vector<std::float_t>> plfh_connected_set;
+    vector<pcl::PLFH_gather> plfh_connected_set;//计算PLFH
     pcl::PointXYZ point_single;
+    int j = 0;
+    point_single.x = cloud->points[j].x;
+    point_single.y = cloud->points[j].y;
+    point_single.z = cloud->points[j].z;//随机选取一个点
 
-    //point_single  和Calcu_PLFHset需要再看看
     Calcu_PLFHset(PlaneSet_S,plfh_connected_set,point_single);
-
-	//结果可视化
-	Viewer_Results_clouds(cloud_copy.makeShared(), PlaneSet_S);
+    Viewer_Plotter(plfh_connected_set);//可视化PLFH
 }
 

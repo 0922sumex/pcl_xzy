@@ -1,5 +1,4 @@
 #pragma once
-//利用RANSAC拟合得到多个平面
 
 #include <pcl/sample_consensus/ransac.h>
 #include <vector>
@@ -33,7 +32,6 @@ public:
 	};
 	plane(pcl::ModelCoefficients cofficientset, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_plane_) {
 		cofficient_set = cofficientset;
-		//cloud_plane = *cloud_plane_;
 		pcl::copyPointCloud(*cloud_plane_, cloud_plane);
 		normal(0) = cofficient_set.values[0];
 		normal(1) = cofficient_set.values[1];

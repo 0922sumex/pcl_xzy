@@ -1,7 +1,8 @@
 #pragma once
 #include "plane_set.h"
+#include "plfh_solver.h"
 #include <random>
-
+#include<pcl/visualization/pcl_plotter.h>
 
 // 生成随机颜色
 pcl::RGB generateRandomColor()
@@ -46,5 +47,41 @@ void Viewer_Results_clouds(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, plane_s
 	while (!viewer->wasStopped())
 	{
 		viewer->spinOnce(100);
+	}
+}
+
+void Viewer_Plotter(vector<pcl::PLFH_gather> plfh_connected_set) {
+	//定义一个plottter类
+	pcl::visualization::PCLPlotter* plotter = new pcl::visualization::PCLPlotter();
+	int length = plfh_connected_set[0].features_histogram.size();
+	
+	std::vector<double> array_x(length), array_y(length);
+	for (int i = 0; i < length; ++i)
+	{
+		array_x[i] = i;
+		array_y[i] = plfh_connected_set[0].features_histogram[i];
+	}
+	plotter->addPlotData(array_x, array_y, "plfh", vtkChart::LINE);
+	plotter->plot();
+	while (!plotter->wasStopped())
+	{
+		plotter->spinOnce();
+	}
+}
+
+void Viewer_PLFH_data(plane_set PlaneSet,vector<pcl::PLFH_gather> plfh_connected_set) {
+	for (int i = 0; i < PlaneSet.getPlaneNumber(); i++) {
+		cout << "第" << i << "个平面的角度直方图：";
+		int j = 0;
+		for (; j < (plfh_connected_set[i].nr_dimensions_)/2; j++) {
+			cout << plfh_connected_set[i].features_histogram[j] << "    ";
+		}
+		cout << endl;
+
+		cout << "第" << i << "个平面的距离直方图：";
+		for (; j < plfh_connected_set[i].nr_dimensions_; j++) {
+			cout << plfh_connected_set[i].features_histogram[j] << "    ";
+		}
+		cout << endl;
 	}
 }

@@ -4,8 +4,6 @@
 void calcLine(pcl::ModelCoefficients coefsOfPlane1, pcl::ModelCoefficients coefsOfPlane2, LinePara3D& coefsOfLine)
 {
     //算出两平面间的交线
-    //方向向量n=n1×n2=(b1*c2-c1*b2,c1*a2-a1*c2,a1*b2-b1*a2)
-    pcl::ModelCoefficients temcoefs;
     double a1, b1, c1, d1, a2, b2, c2, d2;
     double tempy, tempz;
     a1 = coefsOfPlane1.values[0];
@@ -28,6 +26,11 @@ void calcLine(pcl::ModelCoefficients coefsOfPlane1, pcl::ModelCoefficients coefs
     coefsOfLine.line_direction.dierctionlX=b1 * c2 - c1 * b2;
     coefsOfLine.line_direction.dierctionlY=c1 * a2 - a1 * c2;
     coefsOfLine.line_direction.dierctionlZ=a1 * b2 - b1 * a2;
+
+    //交线的法向量  (b, -a, 0) 
+    coefsOfLine.line_normal.normalX= c1 * a2 - a1 * c2;
+    coefsOfLine.line_normal.normalY = c1 * b2 - b1 * c2;
+    coefsOfLine.line_normal.normalZ = 0;
 }
 
 
@@ -76,13 +79,19 @@ double Point2Line3DVecproduct(LinePara3D line, pcl::PointXYZ point)
     double qb_length = sqrt(dx * dx + dy * dy + dz * dz);
 
     double ds = chacheng_length / qb_length;
+
+    //cout << "算出固定点到平面间交线的距离：" << ds << endl;
+
     return ds;
 
 }
 
-pcl::PLFH_scattered Calcu_plfh (plane Plane_itself,int index,plane_set PlaneSet, pcl::PointXYZ point) {
+pcl::PLFH_scattered Calcu_plfh (int index,plane_set PlaneSet, pcl::PointXYZ point) {
+
     //计算该平面到其他平面之间的角度和距离
+
     pcl::PLFH_scattered plfh;
+    plane Plane_itself=PlaneSet.getPlaneSet()[index];
     Eigen::Vector3f n1 = Plane_itself.normal;
     LinePara3D coefsOfLine;//相交线 
 
@@ -101,29 +110,30 @@ pcl::PLFH_scattered Calcu_plfh (plane Plane_itself,int index,plane_set PlaneSet,
         // 使用反余弦函数计算夹角
         float angle = std::acos(dotProduct / (n1Norm * n2Norm));
         plfh.angle_histogram.push_back(angle);
-        
+        plfh.nr_dimensions_++;
+
         // 计算一个固定点到平面相交线之间的距离
-        //找到平面相交线
         LinePara3D coefsOfLine;
         calcLine(Plane_itself.cofficient_set,PlaneSet.getPlaneSet()[i].cofficient_set,coefsOfLine);
         double dis_line=Point2Line3DVecproduct(coefsOfLine,point);
         plfh.distance_histogram.push_back(dis_line);
-        //算出距离
     }
     return plfh;
 }
 
 
-void Calcu_PLFHset(plane_set& PlaneSet, vector<vector<std::float_t>>& plfh_connected_set, pcl::PointXYZ point)
+void Calcu_PLFHset(plane_set& PlaneSet, vector<pcl::PLFH_gather>& plfh_connected_set, pcl::PointXYZ point)
 {
     pcl::PLFH_scattered plfh;
-    pcl::DefaultPointRepresentation<pcl::PLFH_scattered> plfh_connected;
-    vector<float> plfh_out;
-
-    for (int i = 0; i < PlaneSet.getPlaneNumber(); i++) {
-        plfh=Calcu_plfh(PlaneSet.getPlaneSet()[i], i,PlaneSet,point);//计算角度和距离
-        plfh_connected.copyToFloatArray(plfh, plfh_out.data()); // 连接直方图
-        plfh_connected_set.push_back(plfh_out);
-    }
+    pcl::PLFH_gather plfh_connected;
    
+    for (int i = 0; i < PlaneSet.getPlaneNumber(); i++) {
+        plfh=Calcu_plfh( i,PlaneSet,point);//计算角度和距离
+        plfh_connected.copyToFloatArray(plfh); // 连接直方图
+        plfh_connected_set.push_back(plfh_connected);
+        plfh.angle_histogram.clear();
+        plfh.distance_histogram.clear();
+        plfh_connected.features_histogram.clear();
+        plfh_connected.nr_dimensions_ = 0;
+    }
 }
