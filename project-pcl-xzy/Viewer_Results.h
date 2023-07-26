@@ -19,6 +19,28 @@ pcl::RGB generateRandomColor()
 	return color;
 }
 
+void LoadClouds(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud) {
+	//从文件中加载点云
+	if (pcl::io::loadPCDFile<pcl::PointXYZRGB>("cloud_bin_0.pcd", *cloud) == -1) //* load the file
+	{
+		PCL_ERROR("Couldn't read file test_pcd.pcd \n");
+		exit (-1);
+	}
+	std::cout << "Loaded "
+		<< cloud->width * cloud->height
+		<< " data points from test_pcd.pcd with the following fields: "
+		<< std::endl;
+}
+
+pcl::PointXYZ RandomSelectSingleCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud) {
+	int j = 0;
+	pcl::PointXYZ point_single;
+	point_single.x = cloud->points[j].x;
+	point_single.y = cloud->points[j].y;
+	point_single.z = cloud->points[j].z;//随机选取一个点
+	return point_single;
+}
+
 void Viewer_Results_clouds(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, plane_set PlaneSet) {
 	vector<plane> cloud_plane_S = PlaneSet.getPlaneSet();
 
